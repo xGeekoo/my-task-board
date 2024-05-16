@@ -5,6 +5,7 @@ const app = express();
 
 const errorController = require('./controllers/errorController');
 const AppError = require('./utils/AppError');
+const boardRouter = require('./routes/boardRoutes');
 const taskRouter = require('./routes/taskRoutes');
 
 app.set('json spaces', 2);
@@ -16,7 +17,8 @@ app.get('/', (req, res) => {
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/api/v1/tasks', taskRouter);
+app.use('/api/v1/boards', boardRouter);
+// app.use('/api/v1/tasks', taskRouter);
 
 app.all('*', (req, res) => {
   throw new AppError(

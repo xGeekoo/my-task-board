@@ -1,11 +1,6 @@
 const mongoose = require('mongoose');
 
 const taskSchema = new mongoose.Schema({
-  userId: {
-    type: String,
-    trim: true,
-    required: [true, 'Please provide a user id.']
-  },
   name: {
     type: String,
     trim: true,
@@ -26,7 +21,7 @@ const taskSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: {
-      values: ['in-progress', 'completed', 'wont-do'],
+      values: ['created', 'in-progress', 'completed', 'wont-do'],
       message: 'Please provide a valid status.'
     },
     required: [true, 'Please provide a status.']
