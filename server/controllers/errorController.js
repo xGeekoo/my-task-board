@@ -2,18 +2,37 @@ const AppError = require('../utils/AppError');
 
 function handleValidationError({ errors }) {
   const errorsArray = Object.values(errors);
-  const message = errorsArray.map(obj => obj.message).join('\n');
+  const message = errorsArray
+    .map(obj => `Invalid ${obj.path}: ${obj.message}`)
+    .join('\n');
   return new AppError(message, 400);
 }
 
-function errorController(err, req, res, next) {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
+function handleCastError(err) {
+  return new AppError(`The data type of ${err.path} is incorrect.`, 400);
+}
 
+function handleDuplicateKeyError({ keyValue }) {
+  const [key, val] = Object.entries(keyValue).at(0);
+  return new AppError(
+    `The value ${val} of ${key} property is already used.`,
+    400
+  );
+}
+
+function errorController(err, req, res, next) {
   let error;
-  switch (err.name) {
-    case 'ValidationError':
-      error = handleValidationError(err);
+
+  if (err.name === 'ValidationError') {
+    error = handleValidationError(err);
+  } else if (err.name === 'CastError') {
+    error = handleCastError(err);
+  } else if (err.code === 11000) {
+    error = handleDuplicateKeyError(err);
+  } else {
+    err.statusCode = err.statusCode || 500;
+    err.status = err.status || 'error';
+    error = err;
   }
 
   if (process.env.NODE_ENV === 'development') {

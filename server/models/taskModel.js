@@ -21,7 +21,7 @@ const taskSchema = new mongoose.Schema({
       values: ['👨‍💻', '💬', '☕', '🏋️', '📚', '⏰'],
       message: 'Please provide a valid icon.'
     },
-    required: [true, 'Please provide a valid icon.']
+    required: [true, 'Please provide an icon.']
   },
   status: {
     type: String,
