@@ -1,8 +1,11 @@
 const express = require('express');
-const { createBoard } = require('../controllers/boardController');
 const router = express.Router();
+const { createBoard, getBoard } = require('../controllers/boardController');
+const taskRouter = require('./taskRoutes');
+
+router.use('/:boardId/tasks', taskRouter);
 
 router.route('/').post(createBoard);
-router.route('/:id').get().patch().delete();
+router.route('/:id').get(getBoard);
 
 module.exports = router;

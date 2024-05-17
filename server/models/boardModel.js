@@ -20,7 +20,12 @@ const boardSchema = new mongoose.Schema({
     trim: true,
     required: [true, 'Please provide a description']
   },
-  tasks: [mongoose.Schema.Types.ObjectId]
+  tasks: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Task'
+    }
+  ]
 });
 
 const Board = mongoose.model('Board', boardSchema);

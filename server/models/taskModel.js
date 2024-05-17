@@ -21,10 +21,9 @@ const taskSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: {
-      values: ['created', 'in-progress', 'completed', 'wont-do'],
+      values: ['in-progress', 'completed', 'wont-do'],
       message: 'Please provide a valid status.'
-    },
-    required: [true, 'Please provide a status.']
+    }
   }
 });
 
