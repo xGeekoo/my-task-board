@@ -49,7 +49,7 @@ function TaskForm({ setShowTaskForm }) {
   }
 
   function handleDelete() {
-    alert('TASK DELETED');
+    confirm('Are you sure you want delete this task ?');
   }
 
   function handleOutsideClick(e) {
@@ -178,7 +178,7 @@ function TaskForm({ setShowTaskForm }) {
             </div>
           </form>
         </main>
-        <footer className="flex justify-end gap-x-4">
+        <footer className="flex flex-col items-center gap-4 sm:flex-row sm:justify-end">
           <button
             className="flex items-center gap-x-2 rounded-full bg-clr-gray-dark px-7 py-1.5 text-clr-white"
             onClick={handleDelete}
@@ -186,7 +186,7 @@ function TaskForm({ setShowTaskForm }) {
             Delete <img src={trashSVG} alt="Delete" />
           </button>
           <button
-            className="flex items-center gap-x-2 rounded-full bg-clr-blue px-7 py-1.5 text-clr-white"
+            className="flex items-center justify-center gap-x-2 rounded-full bg-clr-blue px-7 py-1.5 text-clr-white"
             type="submit"
             form="task-form"
           >

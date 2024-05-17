@@ -27,9 +27,16 @@ function App() {
       <main>
         <article
           onClick={() => setShowTaskForm(true)}
-          className="flex cursor-pointer items-start gap-x-6 rounded-xl bg-clr-gray-light p-4"
+          className="relative flex cursor-pointer items-start gap-x-6 rounded-xl bg-clr-gray-light p-4"
         >
-          <span className="rounded-xl bg-white p-2 text-lg">📚</span>
+          <div>
+            <span className="mb-2 flex aspect-square w-11 shrink-0 items-center justify-center rounded-xl bg-clr-white">
+              📚
+            </span>
+            <span className="right-4 top-4 flex aspect-square w-11 shrink-0 items-center justify-center rounded-xl bg-clr-red-dark sm:absolute">
+              <img src={crossSVG} alt="Red X" />
+            </span>
+          </div>
           <div className="self-center">
             <h3 className="text-xl font-semibold">Task To Do</h3>
             <p className="mt-1 font-light leading-5">
@@ -38,11 +45,6 @@ function App() {
               learn TypeScript.
             </p>
           </div>
-          <img
-            className="ml-auto hidden rounded-xl bg-red-500 p-3 sm:block"
-            src={crossSVG}
-            alt="Red X"
-          />
         </article>
       </main>
       {showTaskForm && <TaskForm setShowTaskForm={setShowTaskForm} />}

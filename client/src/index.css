@@ -6,7 +6,7 @@
   *,
   *::before,
   *::after {
-    @apply whitespace-pre-line outline-none transition focus:ring-2 focus:ring-clr-blue;
+    @apply break-words outline-none transition focus:ring-2 focus:ring-clr-blue;
   }
 
   label,
