@@ -18,7 +18,8 @@ exports.createBoard = catchAsync(async (req, res) => {
     {
       name: 'Task To Do',
       message: 'Work on a Challenge on devChallenges.io,\nlearn TypeScript.',
-      icon: '📚'
+      icon: '📚',
+      status: 'created'
     }
   ];
 

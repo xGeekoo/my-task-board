@@ -18,7 +18,6 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api/v1/boards', boardRouter);
-// app.use('/api/v1/tasks', taskRouter);
 
 app.all('*', (req, res) => {
   throw new AppError(
