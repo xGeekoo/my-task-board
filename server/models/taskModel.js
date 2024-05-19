@@ -23,7 +23,12 @@ const taskSchema = new mongoose.Schema({
     enum: {
       values: ['created', 'in-progress', 'completed', 'wont-do'],
       message: 'Please provide a valid status.'
-    }
+    },
+    required: [true, 'Please provide a status.']
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 });
 

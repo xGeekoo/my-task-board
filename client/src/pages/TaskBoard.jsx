@@ -8,8 +8,13 @@ import plusSVG from '../assets/Add_round_duotone.svg';
 import clockSVG from '../assets/Time_atack_duotone.svg';
 import checkmarkSVG from '../assets/Done_round_duotone.svg';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { createBoard, getBoard } from '../services/apiBoard';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  createBoard as createBoardApi,
+  getBoard as getBoardApi,
+  updateBoard as updateBoardApi
+} from '../services/apiBoard';
+import { createTask as createTaskApi } from '../services/apiTask';
 
 const statusInfo = new Map([
   [
@@ -47,14 +52,14 @@ function TaskBoard() {
   const navigate = useNavigate();
   const boardIdStorage = localStorage.getItem('boardId');
 
-  const { data, error, status } = useQuery({
+  const getBoard = useQuery({
     queryKey: ['board', boardId],
-    queryFn: () => getBoard(boardId),
+    queryFn: () => getBoardApi(boardId),
     enabled: Boolean(boardId)
   });
 
-  const { mutate } = useMutation({
-    mutationFn: () => createBoard(),
+  const createBoard = useMutation({
+    mutationFn: () => createBoardApi(),
     onSuccess: board => {
       localStorage.setItem('boardId', board._id);
       navigate(`/${board._id}`, { replace: true });
@@ -64,49 +69,102 @@ function TaskBoard() {
     }
   });
 
+  const updateBoard = useMutation({
+    mutationFn: ({ name }) => updateBoardApi(name, boardId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['board', boardId],
+        exact: true
+      });
+      toast.success('Your board name has been updated!');
+    },
+    onError: err => {
+      toast.error(err.message);
+    }
+  });
+
+  const queryClient = useQueryClient();
+
+  const createTask = useMutation({
+    mutationFn: boardId => createTaskApi(boardId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['board', boardId],
+        exact: true
+      });
+      toast.success('A new task has been created!');
+    },
+    onError: err => {
+      toast.error(err.message);
+    }
+  });
+
   const [showTaskForm, setShowTaskForm] = useState(false);
+  const [taskId, setTaskId] = useState(null);
 
   useEffect(() => {
+    // Verify if a boardId exist on params or localStorage.
+    // If both not exist create a new board, else redirect to the one stored in localStorage
     if (!boardId && !boardIdStorage) {
-      mutate();
+      createBoard.mutate();
     } else if (!boardId && boardIdStorage) {
       navigate(`/${boardIdStorage}`, { replace: true });
     }
-  }, [mutate, boardId, navigate, boardIdStorage]);
+  }, [boardId, boardIdStorage]);
 
   useEffect(() => {
-    if (error && boardId === boardIdStorage) {
+    // Verify if an error was returned.
+    // If is an error and boardId !== boardIdStorage redirect to boardIdStorage.
+    // If both are equal, delete current boardIdStorage and redirect to index page to create a new one.
+    if (getBoard.error && boardId === boardIdStorage) {
       localStorage.removeItem('boardId');
       toast.error(
         "We can't find your board. We trying to create you a new one."
       );
       navigate('/', { replace: true });
-    } else if (error && boardId !== boardIdStorage) {
-      navigate(`${boardIdStorage}`, { replace: true });
+    } else if (getBoard.error && boardId !== boardIdStorage) {
+      navigate(`/${boardIdStorage || ''}`, { replace: true });
       toast.error(
         "This board isn't valid or doesn't exist anymore. We trying to redirect you to your own board."
       );
     }
-  }, [error, navigate, boardId, boardIdStorage]);
+  }, [getBoard.error, boardId, boardIdStorage]);
 
-  if (status !== 'success') {
+  function handleOpenTask(e) {
+    setTaskId(e.currentTarget.dataset.id);
+    setShowTaskForm(true);
+  }
+
+  function handleCreateNewTask() {
+    if (createTask.isPending) return;
+    createTask.mutate(boardId);
+  }
+
+  async function handleUpdateBoard() {
+    const newName = prompt('Choose your new board name');
+    if (!newName) return;
+    const toastId = toast.loading('Loading...');
+    try {
+      await updateBoard.mutateAsync({ name: newName });
+    } finally {
+      toast.dismiss(toastId);
+    }
+  }
+
+  if (getBoard.status !== 'success') {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-clr-white font-black">
-        {status === 'pending' ? (
-          <div className="lds-grid">
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-          </div>
-        ) : (
-          error.message
-        )}
+        <div className="lds-grid">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
       </div>
     );
   }
@@ -117,24 +175,26 @@ function TaskBoard() {
         <img src={logoSVG} alt="My Task Board Logo" />
         <div>
           <h1 className="mb-4 text-[2.5rem]">
-            My Task Board
+            {getBoard.data.name}
             <img
+              onClick={handleUpdateBoard}
               className="ml-3 inline-block cursor-pointer align-baseline"
               src={pencilSVG}
               alt="Pencil"
             />
           </h1>
-          <h2>Tasks to keep organised</h2>
+          <h2>{getBoard.data.description}</h2>
         </div>
       </header>
 
       <main>
         <div className="mb-4 space-y-4">
-          {data.tasks.map(task => (
+          {getBoard.data.tasks.map(task => (
             <article
               key={task._id}
-              onClick={() => setShowTaskForm(true)}
+              onClick={handleOpenTask}
               className={`relative flex cursor-pointer items-start gap-x-6 rounded-xl ${statusInfo.get(task.status).bgColor} p-4`}
+              data-id={task._id}
             >
               <div>
                 <span className="mb-2 flex aspect-square w-11 shrink-0 items-center justify-center rounded-xl bg-clr-white">
@@ -152,19 +212,21 @@ function TaskBoard() {
                 )}
               </div>
               <div className="self-center">
-                <h3 className="text-xl font-semibold">Task To Do</h3>
-                <p className="mt-1 font-light leading-5">
-                  Work on a Challenge on devChallenges.io,
-                  <br />
-                  learn TypeScript.
-                </p>
+                <h3 className="text-xl font-semibold">{task.name}</h3>
+                {task.description && (
+                  <div className="mt-1 font-light leading-5">
+                    {task.description.split('\n').map((text, i) => (
+                      <div key={i}>{text}</div>
+                    ))}
+                  </div>
+                )}
               </div>
             </article>
           ))}
         </div>
         <div
-          onClick={() => setShowTaskForm(true)}
-          className="flex cursor-pointer items-center gap-x-6 rounded-xl bg-clr-orange-light p-4"
+          onClick={handleCreateNewTask}
+          className={`flex cursor-pointer items-center gap-x-6 rounded-xl bg-clr-orange-light p-4 ${createTask.isPending === true ? 'cursor-not-allowed' : ''}`}
         >
           <span className="flex aspect-square w-11 shrink-0 items-center justify-center rounded-xl bg-clr-orange-dark">
             <img src={plusSVG} alt="" />
@@ -172,7 +234,13 @@ function TaskBoard() {
           <h3 className="font-semibold">Add new task</h3>
         </div>
       </main>
-      {showTaskForm && <TaskForm setShowTaskForm={setShowTaskForm} />}
+      {showTaskForm && (
+        <TaskForm
+          boardId={boardId}
+          taskData={getBoard.data.tasks.find(task => task._id === taskId)}
+          setShowTaskForm={setShowTaskForm}
+        />
+      )}
     </div>
   );
 }

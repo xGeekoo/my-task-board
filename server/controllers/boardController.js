@@ -32,5 +32,15 @@ exports.createBoard = catchAsync(async (req, res) => {
     description: 'Tasks to keep organised',
     tasks: tasksId
   });
+  res.status(201).json({ status: 'success', data: { board } });
+});
+
+exports.updateBoard = catchAsync(async (req, res) => {
+  const board = await Board.findByIdAndUpdate(
+    req.params.id,
+    { name: req.body.name },
+    { runValidators: true, new: true }
+  );
+  if (!board) throw new AppError("The board doesn't exist", 404);
   res.status(200).json({ status: 'success', data: { board } });
 });

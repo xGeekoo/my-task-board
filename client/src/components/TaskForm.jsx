@@ -1,13 +1,19 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useForm } from 'react-hook-form';
+import { DevTool } from '@hookform/devtools';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  updateTask as updateTaskApi,
+  deleteTask as deleteTaskApi
+} from '../services/apiTask';
 import orangeCrossSVG from '../assets/close_ring_duotone-1.svg';
 import clockSVG from '../assets/Time_atack_duotone.svg';
 import checkmarkSVG from '../assets/Done_round_duotone.svg';
 import crossSVG from '../assets/close_ring_duotone.svg';
 import trashSVG from '../assets/Trash.svg';
 import aloneCheckmarkSVG from '../assets/Done_round.svg';
-import { useForm } from 'react-hook-form';
-import { DevTool } from '@hookform/devtools';
+import toast from 'react-hot-toast';
 
 const LABEL_CSS = 'mb-1 text-sm font-medium text-clr-gray-dark';
 const ICONS = ['👨‍💻', '💬', '☕', '🏋️', '📚', '⏰'];
@@ -32,24 +38,72 @@ const STATUS = [
   }
 ];
 
-function TaskForm({ setShowTaskForm }) {
+function TaskForm({ boardId, taskData, setShowTaskForm }) {
   const {
     register,
     handleSubmit,
     control,
-    formState: { errors }
-  } = useForm();
+    formState: { errors, isSubmitting }
+  } = useForm({
+    defaultValues: {
+      name: taskData?.name,
+      description: taskData?.description,
+      icon: taskData?.icon,
+      status: taskData?.status
+    }
+  });
 
-  function onSubmit(data) {
-    console.log(data);
+  const queryClient = useQueryClient();
+
+  const updateTask = useMutation({
+    mutationFn: updatedTask =>
+      updateTaskApi(updatedTask, taskData._id, boardId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['board', boardId],
+        exact: true
+      });
+      toast.success('Your task has been updated!');
+    },
+    onError: err => {
+      toast.error(err.message);
+    }
+  });
+
+  const deleteTask = useMutation({
+    mutationFn: () => deleteTaskApi(boardId, taskData._id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['board', boardId],
+        exact: true
+      });
+      toast.success('Your task has been deleted!');
+    },
+    onError: err => {
+      toast.error(err.message);
+    }
+  });
+
+  async function onSubmit(data) {
+    const toastId = toast.loading('Loading...');
+    try {
+      await updateTask.mutateAsync(data);
+      setShowTaskForm(false);
+    } finally {
+      toast.dismiss(toastId);
+    }
   }
 
-  function onError(err) {
-    console.error(err);
-  }
-
-  function handleDelete() {
-    confirm('Are you sure you want delete this task ?');
+  async function handleDelete() {
+    if (confirm('Are you sure you want delete this task ?')) {
+      const toastId = toast.loading('Loading...');
+      try {
+        await deleteTask.mutateAsync();
+        setShowTaskForm(false);
+      } finally {
+        toast.dismiss(toastId);
+      }
+    }
   }
 
   function handleOutsideClick(e) {
@@ -82,8 +136,8 @@ function TaskForm({ setShowTaskForm }) {
           />
         </header>
         <main className="mb-14">
-          <form id="task-form" onSubmit={handleSubmit(onSubmit, onError)}>
-            <div className="mb-4">
+          <form id="task-form" onSubmit={handleSubmit(onSubmit)}>
+            <fieldset disabled={isSubmitting} className="mb-4">
               <label className={LABEL_CSS} htmlFor="name">
                 Task name
               </label>
@@ -100,8 +154,8 @@ function TaskForm({ setShowTaskForm }) {
                   {errors.name.message}
                 </p>
               )}
-            </div>
-            <div className="mb-4">
+            </fieldset>
+            <fieldset disabled={isSubmitting} className="mb-4">
               <label className={LABEL_CSS} htmlFor="description">
                 Description
               </label>
@@ -112,10 +166,13 @@ function TaskForm({ setShowTaskForm }) {
                 placeholder="Enter a short description"
                 {...register('description')}
               ></textarea>
-            </div>
+            </fieldset>
             <div className="mb-4">
               <label className={LABEL_CSS}>Icon</label>
-              <div className="flex flex-wrap gap-4 text-xl">
+              <fieldset
+                disabled={isSubmitting}
+                className="flex flex-wrap gap-4 text-xl [&:disabled_label]:cursor-not-allowed"
+              >
                 {ICONS.map(icon => (
                   <React.Fragment key={icon}>
                     <input
@@ -135,7 +192,7 @@ function TaskForm({ setShowTaskForm }) {
                     </label>
                   </React.Fragment>
                 ))}
-              </div>
+              </fieldset>
               {errors.icon && (
                 <p className="font-medium text-clr-red-dark">
                   {errors.icon.message}
@@ -144,7 +201,10 @@ function TaskForm({ setShowTaskForm }) {
             </div>
             <div>
               <label className={LABEL_CSS}>Status</label>
-              <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+              <fieldset
+                disabled={isSubmitting}
+                className="grid gap-x-4 gap-y-2 sm:grid-cols-2 [&:disabled_label]:cursor-not-allowed"
+              >
                 {STATUS.map(status => (
                   <React.Fragment key={status.value}>
                     <input
@@ -169,7 +229,7 @@ function TaskForm({ setShowTaskForm }) {
                     </label>
                   </React.Fragment>
                 ))}
-              </div>
+              </fieldset>
               {errors.status && (
                 <p className="font-medium text-clr-red-dark">
                   {errors.status.message}
@@ -180,15 +240,17 @@ function TaskForm({ setShowTaskForm }) {
         </main>
         <footer className="flex flex-col items-center gap-4 sm:flex-row sm:justify-end">
           <button
-            className="flex items-center gap-x-2 rounded-full bg-clr-gray-dark px-7 py-1.5 text-clr-white"
+            className="flex items-center gap-x-2 rounded-full bg-clr-gray-dark px-7 py-1.5 text-clr-white disabled:cursor-not-allowed"
             onClick={handleDelete}
+            disabled={isSubmitting}
           >
             Delete <img src={trashSVG} alt="Delete" />
           </button>
           <button
-            className="flex items-center justify-center gap-x-2 rounded-full bg-clr-blue px-7 py-1.5 text-clr-white"
+            className="flex items-center gap-x-2 rounded-full bg-clr-blue px-7 py-1.5 text-clr-white disabled:cursor-not-allowed"
             type="submit"
             form="task-form"
+            disabled={isSubmitting}
           >
             Save <img src={aloneCheckmarkSVG} alt="Save" />
           </button>
