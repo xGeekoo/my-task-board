@@ -11,6 +11,11 @@ const boardRouter = require('./routes/boardRoutes');
 
 app.set('json spaces', 2);
 
+/* app.use((req, res, next) => {
+  // Simulate network delay
+  setTimeout(next, 500);
+}); */
+
 app.use(helmet());
 
 app.get('/', (req, res) => {

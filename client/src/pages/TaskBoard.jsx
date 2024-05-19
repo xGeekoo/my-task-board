@@ -135,12 +135,18 @@ function TaskBoard() {
     setShowTaskForm(true);
   }
 
-  function handleCreateNewTask() {
+  async function handleCreateNewTask() {
     if (createTask.isPending) return;
-    createTask.mutate(boardId);
+    const toastId = toast.loading('Loading...');
+    try {
+      await createTask.mutateAsync(boardId);
+    } finally {
+      toast.dismiss(toastId);
+    }
   }
 
   async function handleUpdateBoard() {
+    if (updateBoard.isPending) return;
     const newName = prompt('Choose your new board name');
     if (!newName) return;
     const toastId = toast.loading('Loading...');
