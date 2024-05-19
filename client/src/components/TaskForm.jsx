@@ -125,7 +125,7 @@ function TaskForm({ boardId, taskData, setShowTaskForm }) {
       onClick={handleOutsideClick}
       className="fixed inset-0 z-10 overflow-auto bg-clr-gray-medium p-4"
     >
-      <div className="max-w-[38rem] rounded-xl bg-clr-white px-7 py-5">
+      <div className="ml-auto max-w-[38rem] rounded-xl bg-clr-white px-7 py-5">
         <header className="mb-4 flex items-start justify-between">
           <h3 className="text-xl font-semibold">Task details</h3>
           <img
