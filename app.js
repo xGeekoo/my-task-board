@@ -18,9 +18,6 @@ app.set('json spaces', 2);
 
 app.use(helmet());
 
-app.get('/', (req, res) => {
-  res.status(200).sendFile(path.join(__dirname, 'index.html'));
-});
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(express.json());
@@ -28,6 +25,9 @@ app.use(cookieParser());
 app.use(mongoSanitize());
 
 app.use('/api/v1/boards', boardRouter);
+app.get('*', (req, res) => {
+  res.status(200).sendFile(path.join(__dirname, 'index.html'));
+});
 
 app.all('*', (req, res) => {
   throw new AppError(
