@@ -5,7 +5,10 @@ const catchAsync = require('../utils/catchAsync');
 const randomId = require('../utils/randomId');
 
 exports.getBoard = catchAsync(async (req, res) => {
-  const board = await Board.findById(req.params.id).populate('tasks');
+  const board = await Board.findById(req.params.id).populate({
+    path: 'tasks',
+    options: { sort: { createdAt: 1 } }
+  });
   if (!board) throw new AppError("The board doesn't exist", 404);
   res.status(200).json({ status: 'success', data: { board } });
 });

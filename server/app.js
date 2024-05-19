@@ -8,7 +8,6 @@ const app = express();
 const errorController = require('./controllers/errorController');
 const AppError = require('./utils/AppError');
 const boardRouter = require('./routes/boardRoutes');
-const taskRouter = require('./routes/taskRoutes');
 
 app.set('json spaces', 2);
 

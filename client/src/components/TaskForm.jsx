@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useForm } from 'react-hook-form';
-import { DevTool } from '@hookform/devtools';
+// import { DevTool } from '@hookform/devtools';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   updateTask as updateTaskApi,
@@ -42,7 +42,7 @@ function TaskForm({ boardId, taskData, setShowTaskForm }) {
   const {
     register,
     handleSubmit,
-    control,
+    // control,
     formState: { errors, isSubmitting }
   } = useForm({
     defaultValues: {
@@ -256,7 +256,7 @@ function TaskForm({ boardId, taskData, setShowTaskForm }) {
           </button>
         </footer>
       </div>
-      <DevTool control={control} />
+      {/* <DevTool control={control} /> */}
     </div>,
     document.body
   );
